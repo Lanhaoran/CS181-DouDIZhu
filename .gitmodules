@@ -1,0 +1,3 @@
+[submodule "doudizhu"]
+	path = doudizhu
+	url = https://github.com/onestraw/doudizhu.git
