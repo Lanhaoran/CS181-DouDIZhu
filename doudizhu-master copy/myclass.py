@@ -33,6 +33,7 @@ class Cards(object):
                            '14-a-14', '15-a-15']
         #初始化扑克牌类                  
         self.cards = self.get_cards()
+        all_card_name = [str(i) for i in range(3, 14)] + ['1', '2', '14', '15']
 
     #初始化扑克牌类
     def get_cards(self):
@@ -342,7 +343,7 @@ class Player(object):
         return end
         
     #出牌
-    def go(self, last_move_type, last_move, playrecords, model):
+    def go(self, last_move_type, last_move, playrecords, model,i):
         #所有出牌可选列表
         self.total_moves = Moves()
         #获取全部出牌列表
@@ -350,7 +351,7 @@ class Player(object):
         #获取下次出牌列表
         self.next_move_types, self.next_moves = self.total_moves.get_next_moves(last_move_type, last_move)
         #在next_moves中选择出牌方法
-        self.next_move_type, self.next_move = choose(self.next_move_types, self.next_moves, last_move_type, model)
+        self.next_move_type, self.next_move = choose(self.next_move_types, self.next_moves, last_move_type, model[i%2])
         #记录
         end = self.record_move(playrecords)
         #展示

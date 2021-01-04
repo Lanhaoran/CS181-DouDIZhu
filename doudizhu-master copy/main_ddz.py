@@ -22,7 +22,9 @@ class Game(object):
         self.yaobuqis = []
         
         #choose模型
-        self.model = model
+        self.model = []
+        for mod in model:
+            self.model.append(mod)
         
     #发牌
     def game_start(self):
@@ -47,7 +49,7 @@ class Game(object):
     #游戏进行    
     def next_move(self):
         
-        self.last_move_type, self.last_move, self.end, self.yaobuqi = self.players[self.i].go(self.last_move_type, self.last_move, self.playrecords, self.model)
+        self.last_move_type, self.last_move, self.end, self.yaobuqi = self.players[self.i].go(self.last_move_type, self.last_move, self.playrecords, self.model,i)
         if self.yaobuqi:
             self.yaobuqis.append(self.i)
         else:
@@ -70,7 +72,7 @@ class Game(object):
 if __name__=="__main__":
     
     begin = time.time()
-    game_ddz = Game("random") 
+    game_ddz = Game(["random","little_smart"]) 
     game_ddz.game_start()
     for j in range(1):
         #game_ddz = copy.deepcopy(game_ddz)

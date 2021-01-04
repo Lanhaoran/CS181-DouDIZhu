@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import mcts
- 
+import myclass
+import myutil 
 #展示扑克函数
 def card_show(cards, info, n):
     
@@ -47,8 +48,10 @@ def card_show(cards, info, n):
 def choose(next_move_types, next_moves, last_move_type, model):
     
     if model == "random":
+        #print("?????????????????????")
         return choose_random(next_move_types, next_moves, last_move_type)
     if model == "little_smart":
+        #print("!!!!!!!!!!!!!!!!!!!!!!!!")
         return choose_with_little_smart(next_move_types, next_moves, last_move_type)
     if model == "mcts":
         return choose_with_mcts(next_move_types, next_moves, last_move_type)
@@ -132,13 +135,4 @@ def sort_all_rank(next_moves,next_move_types,last_move_type):
             return min_pai[0][1].cards_type,min_pai[0][1].cards_combination
         else:
             return max_pai[0][1].cards_type,max_pai[0][1].cards_combination
-    
-def choose_with_mcts(next_moves, next_move_types, last_move_type):
-    
-
-    
-
-    
-    
-    
     

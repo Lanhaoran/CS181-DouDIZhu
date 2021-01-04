@@ -5,64 +5,90 @@ import sys
 import math
 import random
 import numpy as np
-
+import myutil
+import myclass
+from copy import copy
+from myclass import Cards
 AVAILABLE_CHOICES = [1, -1, 2, -2]
 AVAILABLE_CHOICE_NUMBER = len(AVAILABLE_CHOICES)
 MAX_ROUND_NUMBER = 10
 
 
 class State(object):
-  """
-  蒙特卡罗树搜索的游戏状态，记录在某一个Node节点下的状态数据，包含当前的游戏得分、当前的游戏round数、从开始到当前的执行记录。
-  需要实现判断当前状态是否达到游戏结束状态，支持从Action集合中随机取出操作。
-  """
+    def __init__(self, my_id, my_card, next_card, next_next_card, last_move, winner, moves_num, action, last_p):
+        self.my_id = my_id
+        self.my_card = my_card
+        self.next_card = next_card
+        self.next_next_card = next_next_card
+        self.last_move = last_move
+        self.winner = winner
+        self.moves_num = moves_num
+        self.action = action
+        self.last_pid = last_p
+        self.untried_actions = []
+        self.try_flag = 0
 
-  def __init__(self):
-    self.current_value = 0.0
-    # For the first root node, the index is 0 and the game should start from 1
-    self.current_round_index = 0
-    self.cumulative_choices = []
+    def init_untried_actions(self, move):
+        self.untried_actions.append(move)
 
-  def get_current_value(self):
-    return self.current_value
+    def compute_reward(self, my_id):
+        if my_id == 0:
+            if self.winner == my_id:
+                return 1
+            else:
+                return 0
+        else:
+            if self.winner != 0:
+                return 1
+            else:
+                return 0
 
-  def set_current_value(self, value):
-    self.current_value = value
+    def get_next_state_with_random_choice(self, untried_move):
 
-  def get_current_round_index(self):
-    return self.current_round_index
+        #  下家变自家，下下家变下家，自家变下下家
+        valid_moves = myclass.get_next_moves(self.my_card, self.last_move)
+        moves_num = len(valid_moves)
+        i = np.random.choice(moves_num)
+        tmp = valid_moves[i].copy()
+        if untried_move is not None:
+            tmp = untried_move
+        while self.is_buchu(tmp) and self.last_pid == self.my_id:
+            i = np.random.choice(moves_num)
+            tmp = valid_moves[i].copy()
+        move = []
+        next_next_card = self.my_card.copy()
+        for k in Card.all_card_name:
+            move.extend([int(k)] * tmp.get(k, 0))
+            next_next_card[k] -= tmp.get(k, 0)
 
-  def set_current_round_index(self, turn):
-    self.current_round_index = turn
+        my_id = (self.my_id + 1) % 3
+        my_card = self.next_card.copy()
+        next_card = self.next_next_card.copy()
+        #  判断出完牌游戏是否结束
+        winner = self.my_id
+        for lis in next_next_card.values():
+            if lis != 0:
+                winner = -1
+                break
+        last_move = move.copy()
+        last_p = self.my_id
+        #  如果选择不出， 下家的last_move等于自家的last_move
+        if len(move) == 0:
+            last_p = self.last_pid
+            last_move = self.last_move.copy()
+        if len(move) == 0 and self.last_pid == my_id:
+            last_move = []
+        valid_moves_ = get_moves(my_card, last_move)
+        moves_num_ = len(valid_moves_)
+        next_state = State(my_id, my_card, next_card, next_next_card, last_move, winner, moves_num_, move, last_p)
+        return next_state
 
-  def get_cumulative_choices(self):
-    return self.cumulative_choices
-
-  def set_cumulative_choices(self, choices):
-    self.cumulative_choices = choices
-
-  def is_terminal(self):
-    # The round index starts from 1 to max round number
-    return self.current_round_index == MAX_ROUND_NUMBER
-
-  def compute_reward(self):
-    return -abs(1 - self.current_value)
-
-  def get_next_state_with_random_choice(self):
-    random_choice = random.choice([choice for choice in AVAILABLE_CHOICES])
-
-    next_state = State()
-    next_state.set_current_value(self.current_value + random_choice)
-    next_state.set_current_round_index(self.current_round_index + 1)
-    next_state.set_cumulative_choices(self.cumulative_choices +
-                                      [random_choice])
-
-    return next_state
-
-  def __repr__(self):
-    return "State: {}, value: {}, round: {}, choices: {}".format(
-        hash(self), self.current_value, self.current_round_index,
-        self.cumulative_choices)
+    @staticmethod
+    def is_buchu(move):
+        for k in Cards.all_card_name:
+            if move.get(k) != 0:
+                return False
+        return True
 
 
 class Node(object):
@@ -70,16 +96,13 @@ class Node(object):
   蒙特卡罗树搜索的树结构的Node，包含了父节点和直接点等信息，还有用于计算UCB的遍历次数和quality值，还有游戏选择这个Node的State。
   """
 
-  def __init__(self):
-    self.parent = None
+  def __init__(self,parent,state):
+    self.parent = parent
     self.children = []
 
     self.visit_times = 0
     self.quality_value = 0.0
 
-    self.state = None
-
-  def set_state(self, state):
     self.state = state
 
   def get_state(self):
@@ -87,9 +110,6 @@ class Node(object):
 
   def get_parent(self):
     return self.parent
-
-  def set_parent(self, parent):
-    self.parent = parent
 
   def get_children(self):
     return self.children
@@ -113,7 +133,9 @@ class Node(object):
     self.quality_value += n
 
   def is_all_expand(self):
-    return len(self.children) == AVAILABLE_CHOICE_NUMBER
+        if len(self.children) < self.state.moves_num:
+            return False
+        return True
 
   def add_child(self, sub_node):
     sub_node.set_parent(self)
@@ -144,7 +166,7 @@ def tree_policy(node):
   return node
 
 
-def default_policy(node):
+def default_policy(node,my_id):
   """
   蒙特卡罗树搜索的Simulation阶段，输入一个需要expand的节点，随机操作后创建新的节点，返回新增节点的reward。注意输入的节点应该不是子节点，而且是有未执行的Action可以expend的。
   基本策略是随机选择Action。
@@ -154,65 +176,46 @@ def default_policy(node):
   current_state = node.get_state()
 
   # Run until the game over
-  while current_state.is_terminal() == False:
+  while current_state.winner == -1:
 
     # Pick one random action to play and get next state
-    current_state = current_state.get_next_state_with_random_choice()
+    current_state = current_state.get_next_state_with_random_choice(None)
 
-  final_state_reward = current_state.compute_reward()
+  final_state_reward = current_state.compute_reward(my_id)
   return final_state_reward
 
 
-def expand(node):
+def expand(node,next_moves):
   """
   输入一个节点，在该节点上拓展一个新的节点，使用random方法执行Action，返回新增的节点。注意，需要保证新增的节点与其他节点Action不同。
   """
 
-  tried_sub_node_states = [
-      sub_node.get_state() for sub_node in node.get_children()
-  ]
+  valid_moves = next_moves
+  for cards_combination in valid_moves:
+      node.state.init_untried_actions(cards_combination)
 
-  new_state = node.get_state().get_next_state_with_random_choice()
+  moves_num = len(next_moves)
+  i = np.random.choice(moves_num)
+  untried_move = node.state.untried_actions[i].copy()
 
-  # Check until get the new state which has the different action from others
-  while new_state in tried_sub_node_states:
-    new_state = node.get_state().get_next_state_with_random_choice()
-
-  sub_node = Node()
-  sub_node.set_state(new_state)
-  node.add_child(sub_node)
 
   return sub_node
 
 
-def best_child(node, is_exploration):
+def best_child(node):
   """
   使用UCB算法，权衡exploration和exploitation后选择得分最高的子节点，注意如果是预测阶段直接选择当前Q值得分最高的。
   """
 
-  # TODO: Use the min float value
-  best_score = -sys.maxsize
-  best_sub_node = None
-
-  # Travel all sub nodes to find the best one
-  for sub_node in node.get_children():
-
-    # Ignore exploration for inference
-    if is_exploration:
-      C = 1 / math.sqrt(2.0)
-    else:
-      C = 0.0
-
-    # UCB = quality / times + C * sqrt(2 * ln(total_times) / times)
-    left = sub_node.get_quality_value() / sub_node.get_visit_times()
-    right = 2.0 * math.log(node.get_visit_times()) / sub_node.get_visit_times()
-    score = left + C * math.sqrt(right)
-
-    if score > best_score:
-      best_sub_node = sub_node
-      best_score = score
-
-  return best_sub_node
+  visit = np.array([n.visit for n in node.children])
+  reward = np.array([n.reward for n in node.children])
+  values = reward / visit
+  index = np.where(values == np.max(values))
+  nodes = np.array(node.children)[index]
+  if len(nodes) == 1:
+      return nodes[0]
+  else:
+      return np.random.choice(nodes)
 
 
 def backup(node, reward):
@@ -276,5 +279,4 @@ def main():
     print("Choose node: {}".format(current_node))
 
 
-if __name__ == "__main__":
-  main()
+
