@@ -20,7 +20,7 @@ class Game(object):
         self.playround = 1
         self.i = 0
         self.yaobuqis = []
-        
+        self.cards_out = []
         #choose模型
         self.model = []
         for mod in model:
@@ -36,7 +36,7 @@ class Game(object):
         
         #初始化扑克牌记录类
         self.playrecords = PlayRecords()    
-        
+        self.model = []
         #发牌
         game_init(self.players, self.playrecords, self.cards)
     
@@ -72,15 +72,17 @@ class Game(object):
 if __name__=="__main__":
     
     begin = time.time()
-    game_ddz = Game(["random","little_smart"]) 
+    game_ddz = Game(["little_smart","little_smart"]) 
     game_ddz.game_start()
     for j in range(1):
         #game_ddz = copy.deepcopy(game_ddz)
         i = 0
-        while(game_ddz.playrecords.winner == 0):
+        while (game_ddz.playrecords.winner == 0):
+            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             game_ddz.playrecords.show(str(i))
+            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             game_ddz.next_move()
             i = i + 1
         print(game_ddz.playrecords.winner)
-    print(time.time()-begin)
+    #print(time.time()-begin)
     

@@ -33,7 +33,7 @@ class Cards(object):
                            '14-a-14', '15-a-15']
         #初始化扑克牌类                  
         self.cards = self.get_cards()
-        all_card_name = [str(i) for i in range(3, 14)] + ['1', '2', '14', '15']
+        self.all_card_name = [str(i) for i in range(3, 14)] + ['1', '2', '14', '15']
 
     #初始化扑克牌类
     def get_cards(self):
@@ -326,7 +326,8 @@ class Player(object):
         else:
             playrecords.records.append([self.player_id, self.next_move])
             for i in self.next_move:
-               self.cards_left.remove(i) 
+               self.cards_left.remove(i)
+               #self.cards_out.append((self.player_id,i))
         #同步playrecords
         if self.player_id == 1:
             playrecords.cards_left1 = self.cards_left

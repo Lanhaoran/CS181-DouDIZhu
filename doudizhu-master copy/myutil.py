@@ -101,6 +101,7 @@ def game_init(players, playrecords, cards):
     card_show(p1_cards, "1", 1)
     card_show(p2_cards, "2", 1)
     card_show(left, "left", 1)
+    
 
 class SortCards(object):
     def __init__(self, cards_combination,cards_type):
