@@ -153,7 +153,7 @@ class Moves(object):
             self.bomb.append(self.king)
             
         #出单,出对,出三,炸弹(考虑拆开)
-        for k, v in self.card_num_info.items():
+        for _, v in self.card_num_info.items():
             if len(v) == 1:
                 self.dan.append(v)
             elif len(v) == 2:

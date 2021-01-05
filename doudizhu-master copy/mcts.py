@@ -10,7 +10,7 @@ import myclass
 import main_ddz
 from copy import copy
 from collections import Counter
-from get_bestchild import get_bestchild
+from get_bestchild import get_bestchild_,get_bestchild
 
 
 class State(object):
@@ -23,7 +23,7 @@ class State(object):
         self.untried_actions = [] #？
         self.move_nums = len(next_card) #出的牌的数量
         self.cards_type = cards_type #出的牌的类型
-        self.my_id =my_id #当前state序号
+        self.my_id = my_id  #当前state序号
 
     def init_untried_actions(self, move):
         self.untried_actions.append(move)
@@ -40,9 +40,8 @@ class State(object):
             else:
                 return 0
 
-    def get_next_state_with_random_choice(self, untried_move,next_moves,next_move_types):
+    def get_next_state_with_random_choice(self, untried_move , next_moves , next_move_types):
 
-        #  下家变自家，下下家变下家，自家变下下家
         valid_moves = next_moves
         moves_num = len(valid_moves)
         i = np.random.choice(moves_num)
@@ -51,7 +50,7 @@ class State(object):
         for move in random_move:
           self.my_card.remove(move)
         next_id = (self.my_id + 1) % 2
-        next_card = self.enemy_card
+        enemy_card = self.enemy_card
         my_card =self.my_card
         #  判断出完牌游戏是否结束
         winner = self.my_id
@@ -59,11 +58,11 @@ class State(object):
           winner = -1 
         #  如果选择不出， 下家的last_move等于自家的last_move
         if random_move_type in ["yaobuqi","buyao"]:
-            last_move = self.last_move
+            last_move = "start"
         else:
           last_move = random_move
         
-        next_state = State(next_id, next_card, my_card,last_move, winner,  random_move, random_move_type)
+        next_state = State(next_id, enemy_card, my_card,last_move, winner,  random_move, random_move_type)
         return next_state
 
     
@@ -124,6 +123,7 @@ class Node(object):
         hash(self), self.quality_value, self.visit_times, self.state)
   
   def expand(self):
+    #need to be finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if self.state.try_flag == 0:
             valid_moves = get_moves(self.state.my_card, self.state.last_move)
             for move in valid_moves:
@@ -164,8 +164,8 @@ def default_policy(node,my_id):
   #  随机出牌直到游戏结束
   while current_state.winner == -1:
       current_state = current_state.get_next_state_with_random_choice(None)
-  final_sate_reward = current_state.compute_reward(my_id)
-  return final_sate_reward
+  final_state_reward = current_state.compute_reward(my_id)
+  return final_state_reward
 
 
 
@@ -207,29 +207,28 @@ def backup(node, reward):
 
 
 
-class MCTsModel(myclass.Cards, myclass.Player,main_ddz.Game):
+class MCTSModel(myclass.Cards, myclass.Player,main_ddz.Game):
   def __init__(self,player_id):
-    super(MCTsModel, self).__init__(player_id)
+    super(MCTSModel, self).__init__(player_id)
     root = Node(None, None)
     self.current_node = root
   
-  def choose_with_mcts(self, state, next_moves, next_move_types, last_move_type, last_move):
-    if last_move_type == "start":
+  def choose_with_mcts(self, state, next_moves, next_move_types, last_move):
+    
       root = Node(None, None)
       self.current_node = root
-    else:
-      for child in self.current_node.get_children():
+    
+      """for child in self.current_node.get_children():
         if self.compare(child.state.action,last_move):
-          self.current_node = child
-      if self.player_id == 1:
-        enemy_cards = self.Playrecords.cards_left2
-      elif self.player_id == 2:
-        enemy_cards = self.Playrecords.cards_left1
-      
-      state_ = State(next_moves, enemy_cards, last_move, -1, None,next_move_types)
-      
+          self.current_node = child"""
+      enemy_cards = self.playrecords.cards_left2
+      my_card = self.playrecords.cards_left1
+      my_id = (self.player_id + 1) % 2
+      state_ = State(my_id,enemy_cards, my_card, last_move, -1, None,next_move_types)
+      self.current_node.set_state(state_)
+
       computation_budget = 2000
-      for i in range(computation_budget):
+      for _ in range(computation_budget):
           expand_node = tree_policy(self.current_node,self.player_id)
           reward = default_policy(expand_node,self.player_id)
           backup(expand_node, reward)

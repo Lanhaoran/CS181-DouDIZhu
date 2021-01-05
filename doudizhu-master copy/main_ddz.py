@@ -72,7 +72,7 @@ class Game(object):
 if __name__=="__main__":
     
     begin = time.time()
-    game_ddz = Game(["little_smart","little_smart"]) 
+    game_ddz = Game(["mcts","little_smart"]) 
     game_ddz.game_start()
     for j in range(1):
         #game_ddz = copy.deepcopy(game_ddz)

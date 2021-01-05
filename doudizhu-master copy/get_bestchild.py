@@ -29,3 +29,14 @@ def get_bestchild(node, my_id):
             return nodes[0]
         else:
             return np.random.choice(nodes)
+
+def get_bestchild_(node):
+    visit = np.array([n.visit for n in node.children])
+    reward = np.array([n.reward for n in node.children])
+    values = reward / visit
+    index = np.where(values == np.max(values))
+    nodes = np.array(node.children)[index]
+    if len(nodes) == 1:
+        return nodes[0]
+    else:
+        return np.random.choice(nodes)
