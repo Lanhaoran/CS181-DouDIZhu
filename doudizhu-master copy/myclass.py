@@ -5,15 +5,15 @@ Created on Thu Jul 13 21:55:58 2017
 @author: XuGang
 """
 #import numpy as np
-from myutil import card_show, choose
-
+import myutil
+import chooseModel
 
 ############################################
 #              扑克牌相关类                 #
 ############################################
 class Cards(object):
     """
-    一副扑克牌类,54张排,abcd四种花色,小王14-a,大王15-a
+    一副扑克牌类,54张牌,abcd四种花色,小王14-a,大王15-a
     """
     def __init__(self):
         #初始化扑克牌类型
@@ -92,9 +92,9 @@ class PlayRecords(object):
     #展示
     def show(self, info):
         print(info)
-        card_show(self.cards_left1, "player 1", 1)
-        card_show(self.cards_left2, "player 2", 1)
-        card_show(self.records, "record", 3)
+        myutil.card_show(self.cards_left1, "player 1", 1)
+        myutil.card_show(self.cards_left2, "player 2", 1)
+        myutil.card_show(self.records, "record", 3)
 
 
 ############################################
@@ -314,7 +314,7 @@ class Player(object):
     #展示
     def show(self, info):
         self.total_moves.show(info)
-        card_show(self.next_move, "next_move", 1)
+        myutil.card_show(self.next_move, "next_move", 1)
         #card_show(self.cards_left, "card_left", 1)
         
     #根据next_move同步cards_left
@@ -333,6 +333,7 @@ class Player(object):
             playrecords.cards_left1 = self.cards_left
             playrecords.next_moves1.append(self.next_moves)
             playrecords.next_move1.append(self.next_move)
+            
         elif self.player_id == 2:
             playrecords.cards_left2 = self.cards_left 
             playrecords.next_moves2.append(self.next_moves)
@@ -347,12 +348,15 @@ class Player(object):
     def go(self, last_move_type, last_move, playrecords, model,i):
         #所有出牌可选列表
         self.total_moves = Moves()
+        
         #获取全部出牌列表
         self.total_moves.get_moves(self.cards_left)
         #获取下次出牌列表
         self.next_move_types, self.next_moves = self.total_moves.get_next_moves(last_move_type, last_move)
         #在next_moves中选择出牌方法
-        self.next_move_type, self.next_move = choose(self.next_move_types, self.next_moves, last_move_type, model[i%2])
+        #print("i:", i)
+        #print("len:",len(model))
+        self.next_move_type, self.next_move = chooseModel.choose(self.next_move_types, self.next_moves, last_move_type, model[i%2],playrecords.cards_left1,playrecords.cards_left2,i)
         #记录
         end = self.record_move(playrecords)
         #展示

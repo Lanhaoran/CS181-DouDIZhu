@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import mcts
-import myclass
-import myutil 
 #展示扑克函数
 def card_show(cards, info, n):
     
@@ -45,16 +42,7 @@ def card_show(cards, info, n):
        
 
 #在Player的next_moves中选择出牌方法
-def choose(next_move_types, next_moves, last_move_type, model):
-    
-    if model == "random":
-        #print("?????????????????????")
-        return choose_random(next_move_types, next_moves, last_move_type)
-    if model == "little_smart":
-        #print("!!!!!!!!!!!!!!!!!!!!!!!!")
-        return choose_with_little_smart(next_move_types, next_moves, last_move_type)
-    if model == "mcts":
-        return choose_with_mcts(next_move_types, next_moves, last_move_type)
+
 
 #random
 def choose_random(next_move_types, next_moves, last_move_type):
@@ -75,7 +63,7 @@ def choose_random(next_move_types, next_moves, last_move_type):
     for i in range(len(next_moves[r])):
         print(next_moves[r][i].name)"""
     #sort_all_rank(next_moves)
-    return next_move_types[r], next_moves[r] 
+    return next_move_types[r], next_moves[r]
     
 def choose_with_little_smart(next_move_types, next_moves, last_move_type):
     
