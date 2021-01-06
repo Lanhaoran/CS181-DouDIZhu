@@ -6,14 +6,15 @@ Created on Thu Jul 13 21:55:58 2017
 """
 #import numpy as np
 from myutil import card_show, choose
+import DQN
 
 
 ############################################
-#              扑克牌相关类                  #
+#              扑克牌相关类                 #
 ############################################
 class Cards(object):
     """
-    一副扑克牌类,54张牌,abcd四种花色,小王14-a,大王15-a
+    一副扑克牌类,54张排,abcd四种花色,小王14-a,大王15-a
     """
     def __init__(self):
         #初始化扑克牌类型
@@ -33,6 +34,7 @@ class Cards(object):
                            '14-a-14', '15-a-15']
         #初始化扑克牌类                  
         self.cards = self.get_cards()
+        self.all_card_name = [str(i) for i in range(3, 14)] + ['1', '2', '14', '15']
 
     #初始化扑克牌类
     def get_cards(self):
@@ -71,17 +73,15 @@ class PlayRecords(object):
         #当前手牌
         self.cards_left1 = []
         self.cards_left2 = []
-        self.cards_left3 = []
         
         #可能出牌选择
         self.next_moves1 = []
         self.next_moves2 = []
-        self.next_moves3 = []
+
 
         #出牌记录
         self.next_move1 = []
         self.next_move2 = []
-        self.next_move3 = []
         
         #出牌记录
         self.records = []
@@ -89,13 +89,14 @@ class PlayRecords(object):
         #胜利者
         #winner=0,1,2,3 0表示未结束,1,2,3表示winner
         self.winner = 0
+
+        #
    
     #展示
     def show(self, info):
         print(info)
         card_show(self.cards_left1, "player 1", 1)
         card_show(self.cards_left2, "player 2", 1)
-        card_show(self.cards_left3, "player 3", 1)
         card_show(self.records, "record", 3)
 
 
@@ -155,7 +156,7 @@ class Moves(object):
             self.bomb.append(self.king)
             
         #出单,出对,出三,炸弹(考虑拆开)
-        for k, v in self.card_num_info.items():
+        for _, v in self.card_num_info.items():
             if len(v) == 1:
                 self.dan.append(v)
             elif len(v) == 2:
@@ -229,6 +230,7 @@ class Moves(object):
             for move in self.dan:
                 #比last大
                 if move[0].bigger_than(last_move[0]):
+                    #print(move[0].rank)
                     self.next_moves.append(move)  
                     self.next_moves_type.append("dan")
         #出对
@@ -283,7 +285,8 @@ class Moves(object):
             for move in self.bomb:
                 self.next_moves.append(move) 
                 self.next_moves_type.append("bomb")
-                
+        """for i in self.next_moves:
+            print(i[0].rank)"""
         return self.next_moves_type, self.next_moves
     
     
@@ -310,6 +313,7 @@ class Player(object):
     def __init__(self, player_id):
         self.player_id = player_id
         self.cards_left = []
+        self.net = DQN.Net()
 
     #展示
     def show(self, info):
@@ -322,11 +326,13 @@ class Player(object):
         #playrecords中records记录[id,next_move]
         if self.next_move_type in ["yaobuqi", "buyao"]:
             self.next_move = self.next_move_type
-            playrecords.records.append([self.player_id, self.next_move_type])
+            playrecords.records.append([self.player_id, self.next_move_type, self.cards_left])
         else:
-            playrecords.records.append([self.player_id, self.next_move])
+            #playrecords.records.append([self.player_id, self.next_move])
             for i in self.next_move:
-               self.cards_left.remove(i) 
+               self.cards_left.remove(i)
+               #self.cards_out.append((self.player_id,i))
+            playrecords.records.append([self.player_id, self.next_move, self.cards_left])
         #同步playrecords
         if self.player_id == 1:
             playrecords.cards_left1 = self.cards_left
@@ -336,10 +342,6 @@ class Player(object):
             playrecords.cards_left2 = self.cards_left 
             playrecords.next_moves2.append(self.next_moves)
             playrecords.next_move2.append(self.next_move)
-        elif self.player_id == 3:
-            playrecords.cards_left3 = self.cards_left  
-            playrecords.next_moves3.append(self.next_moves)
-            playrecords.next_move3.append(self.next_move)
         #是否牌局结束
         end = False
         if len(self.cards_left) == 0:
@@ -347,7 +349,7 @@ class Player(object):
         return end
         
     #出牌
-    def go(self, last_move_type, last_move, playrecords, model):
+    def go(self, last_move_type, last_move, playrecords, model,i):
         #所有出牌可选列表
         self.total_moves = Moves()
         #获取全部出牌列表
@@ -355,7 +357,7 @@ class Player(object):
         #获取下次出牌列表
         self.next_move_types, self.next_moves = self.total_moves.get_next_moves(last_move_type, last_move)
         #在next_moves中选择出牌方法
-        self.next_move_type, self.next_move = choose(self.next_move_types, self.next_moves, last_move_type, model)
+        self.next_move_type, self.next_move = choose(self.next_move_types, self.next_moves, last_move_type, model[i%2], self.cards_left, self.net)
         #记录
         end = self.record_move(playrecords)
         #展示
@@ -460,5 +462,9 @@ class WebShow(object):
                 tmp.append(i[1])
             self.records.append(tmp)        
     
-    
+'''
+print(DQN.get_table_of_cards([]))
+card1 = Card('1-b-12')
+print(DQN.get_table_of_cards([card1]))
+'''
     
