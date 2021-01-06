@@ -2,8 +2,11 @@ import numpy as np
 
 def UCB1(node, c=0.7):
     visit = np.array([n.visit for n in node.children])
+    #print("visit:", visit)
     reward = np.array([n.reward for n in node.children])
-    values = reward/visit + c * np.sqrt(2*np.log(node.visit) / visit)
+    #print("reward:",reward)
+    values = reward / visit + c * np.sqrt(2 * np.log(node.visit) / visit)
+    #print("value:",values)
     index = np.where(values == np.max(values))
     return np.array(node.children)[index]
 

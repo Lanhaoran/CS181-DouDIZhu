@@ -6,11 +6,11 @@ import time
 if __name__=="__main__":
     
     begin = time.time()
-    game_ddz = game.Game(["mcts", "little_smart"])
+    game_ddz = game.Game(["mcts", "random"])
     #print("here")
-    game_ddz.game_start()
-    for j in range(1):
+    for j in range(100):
         #game_ddz = copy.deepcopy(game_ddz)
+        game_ddz.game_start()
         i = 0
         #print("here")
         while (game_ddz.playrecords.winner == 0):
