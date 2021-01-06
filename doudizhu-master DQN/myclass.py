@@ -310,10 +310,17 @@ class Player(object):
     """
     player类
     """
-    def __init__(self, player_id):
+    def __init__(self, player_id, model, net = None):
+        #基本信息
         self.player_id = player_id
         self.cards_left = []
-        self.net = DQN.Net()
+        self.model = model
+        '''
+        if self.model == 'DQN':
+            self.net = DQN.Net()
+        else: self.net = None
+        '''
+        self.net = net
 
     #展示
     def show(self, info):
@@ -357,7 +364,7 @@ class Player(object):
         #获取下次出牌列表
         self.next_move_types, self.next_moves = self.total_moves.get_next_moves(last_move_type, last_move)
         #在next_moves中选择出牌方法
-        self.next_move_type, self.next_move = choose(self.next_move_types, self.next_moves, last_move_type, model[i%2], self.cards_left, self.net)
+        self.next_move_type, self.next_move = choose(self.next_move_types, self.next_moves, last_move_type, self.model, self.cards_left, self.net)
         #记录
         end = self.record_move(playrecords)
         #展示

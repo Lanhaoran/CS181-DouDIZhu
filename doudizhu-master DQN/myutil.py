@@ -6,7 +6,15 @@ Created on Thu Jul 13 21:55:58 2017
 """
 import numpy as np
 import DQN
+import random
 
+#给Ｃａｒｄ排序
+class SortCards(object):
+    def __init__(self, cards_combination,cards_type):
+        self.cards_combination = cards_combination
+        self.rank = 0
+        self.cards = []
+        self.cards_type =cards_type
  
 #展示扑克函数
 def card_show(cards, info, n):
@@ -56,6 +64,11 @@ def choose(next_move_types, next_moves, last_move_type, model, cards, net):
         return choose_random(next_move_types, next_moves, last_move_type)
     if model == "DQN":
         return choose_DQN(next_move_types, next_moves, last_move_type, cards, net)
+    if model == "manual":
+        return choose_manual(next_move_types, next_moves, last_move_type, cards)
+    if model == 'little_smart':
+        return choose_with_little_smart(next_move_types, next_moves, last_move_type)
+
 
 #random
 def choose_random(next_move_types, next_moves, last_move_type):
@@ -75,19 +88,25 @@ def choose_random(next_move_types, next_moves, last_move_type):
         
     return next_move_types[r], next_moves[r] 
 
-
+#DQN
 def choose_DQN(next_move_types, next_moves, last_move_type, cards, net):
     #要不起
     if len(next_moves) == 0:
         return "yaobuqi", [] 
     else:
+        # 有一定的概率随机出牌，方便在训练中遍历更多情况(10%)
+        prop = random.randint(1,100)
+        if prop > 89:
+            choose_random(next_move_types, next_moves, last_move_type)
+
+        # 根据ＤＱＮ出牌
         best_action = ""
         best_action_type = ""
         max_value = -999999999
         cards_table = DQN.get_table_of_cards(cards)
-        #if last_move_type != "start":
-            #next_move_types.append("buyao")
-            #next_moves.append([])
+        if last_move_type != "start":
+            next_move_types.append("buyao")
+            next_moves.append([])
         for i in range(len(next_moves)):
             move_table = DQN.get_table_of_cards(next_moves[i])
             input = cards_table.copy()
@@ -98,6 +117,51 @@ def choose_DQN(next_move_types, next_moves, last_move_type, cards, net):
                 best_action = next_moves[i]
                 best_action_type = next_move_types[i]
         return best_action_type, best_action
+
+#manual
+def choose_manual(next_move_types, next_moves, last_move_type, cards):
+    #要不起
+    if len(next_moves) == 0:
+        return "yaobuqi", [] 
+    else:
+        # 展示手牌
+        card_show(cards,"Your card: ", 1)
+        card_show(next_moves,"Moves: ", 2)
+        move_index_list = []
+        for move in next_moves:
+            move_index_list.append([cards.index(card) for card in move])
+        print("Move index combination: ", move_index_list)
+        # 要求输入
+        print("Print the index of cards in the deck shown above, split with comma")
+        input_list = input('>>>')
+        #　最开始不能出不要
+        while last_move_type == 'start' and input_list == 'buyao':
+            print("Illegal combinations, try again!")
+            input_list = input('>>>')
+        if last_move_type != 'start' and input_list == 'buyao':
+            return 'buyao', []
+        # 处理输入
+        move_ind_list = [int(ind) for ind in input_list.split(',')]
+        move = [cards[i] for i in move_ind_list]
+        while move not in next_moves:
+            print("Illegal combinations, try again!")
+            input_list = input('>>>')
+            move_ind_list = [int(ind) for ind in input_list.split(',')]
+            move = [cards[i] for i in move_ind_list]
+        # 返回出牌类型和牌组
+        index = next_moves.index(move)
+        return next_move_types[index], next_moves[index]
+
+#little_smart
+def choose_with_little_smart(next_move_types, next_moves, last_move_type):
+    if len(next_moves) == 0:
+        return "yaobuqi", []
+    else:
+        return sort_all_rank(next_moves,next_move_types,last_move_type)
+        
+            
+
+        
 
 
 
@@ -119,9 +183,42 @@ def game_init(players, playrecords, cards):
     left = cards.cards[43:]
     players[0].cards_left = playrecords.cards_left1 = p1_cards
     players[1].cards_left = playrecords.cards_left2 = p2_cards
-    card_show(p1_cards, "1", 1)
-    card_show(p2_cards, "2", 1)
-    card_show(left, "left", 1)   
+    #card_show(p1_cards, "1", 1)
+    #card_show(p2_cards, "2", 1)
+    #card_show(left, "left", 1)   
+
+
+#排序
+def sort_all_rank(next_moves,next_move_types,last_move_type):
+    #　５０％概率随机出牌出牌
+    prob = random.randint(1,4)
+    if prob > 2:
+        choose_random(next_moves,next_move_types,last_move_type)
+
+    rankList = {}
+    i = 0
+    for cards_combination in next_moves:
+        #print(i)
+        sorted_cards =SortCards(cards_combination,next_move_types[i])
+        for cards in cards_combination:
+            sorted_cards.cards.append(cards.name)
+            sorted_cards.rank += cards.rank
+        
+        rankList[i] = sorted_cards
+        i += 1
+    min_pai = sorted(rankList.items(), key=lambda x: x[1].rank,reverse=False)
+    max_pai = sorted(rankList.items(), key=lambda x: x[1].rank, reverse=True)
+    """print("next moves leng", len(next_moves))
+    print("next moves type leng",len(next_move_types))
+    print("ranklist leng",len(rankList))
+    print("min_pai leng:", len(min_pai))
+    print("max_pai leng:",len(max_pai))"""
+    """for i in range(len(max_pai)):
+        print(max_pai[i][1].cards_type,max_pai[i][1].cards)"""
+    if last_move_type != "start":
+        return min_pai[0][1].cards_type,min_pai[0][1].cards_combination
+    else:
+        return max_pai[0][1].cards_type,max_pai[0][1].cards_combination
     
     
     

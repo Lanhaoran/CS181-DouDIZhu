@@ -9,8 +9,6 @@ from copy import copy
 from collections import Counter
 #from get_bestchild import get_bestchild_,get_bestchild
 
-
-
 TOTAL_Cards_types = ['1-a-12', '1-b-12','1-c-12','1-d-12',
                            '2-a-13', '2-b-13','2-c-13','2-d-13',
                            '3-a-1', '3-b-1','3-c-1','3-d-1',
@@ -42,17 +40,20 @@ import matplotlib.pyplot as plt
 from torch.autograd import Variable
 
 class Net():
-
     def __init__(self):
         # 搭建网络
-        print("build net")
-        self.net = torch.nn.Sequential(
-            torch.nn.Linear(108, 250),
-            torch.nn.ReLU(),
-            torch.nn.Linear(250, 100),
-            torch.nn.ReLU(),
-            torch.nn.Linear(100, 1)
-        )
+        try:
+            self.load_model("stupid_model.pkl")
+            print("Load net")
+        except (FileNotFoundError):            
+            print("Build net")          
+            self.net = torch.nn.Sequential(
+                torch.nn.Linear(108, 250),
+                torch.nn.ReLU(),
+                torch.nn.Linear(250, 100),
+                torch.nn.ReLU(),
+                torch.nn.Linear(100, 1)
+            )
 
     def train(self,input,output):
         #print('train start')
@@ -82,6 +83,15 @@ class Net():
         out = self.net(x)
         #print(out)
         return out
+    
+    def save_model(self):
+        torch.save(self.net, "stupid_model.pkl")
+        print("model saved")
+    
+    def load_model(self,path):
+        self.net = torch.load(path)
+
+
 
          
 
