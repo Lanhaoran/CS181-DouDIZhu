@@ -19,7 +19,7 @@ class Game(object):
         self.model = []
         for mod in model:
             self.model.append(mod)
-        print("length:",self.model)
+        #print("length:",self.model)
     #发牌
     def game_start(self):
         

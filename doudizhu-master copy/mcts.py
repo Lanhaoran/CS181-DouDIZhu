@@ -42,21 +42,22 @@ class State(object):
             else:
                 return 0
 
-    def get_next_state_with_random_choice(self, untried_move ,untried_move_type, next_moves , next_move_types,move_nums):
+    def get_next_state_with_random_choice(self, untried_move ,untried_move_type):
 
-        valid_moves = next_moves
-        move_nums = len(valid_moves)
-        i = np.random.choice(move_nums)
-        random_move = valid_moves[i]
-        random_move_type = next_move_types[i]
-        if untried_move != None:
-          random_move = untried_move
-          random_move_type =untried_move_type
+        
+        random_move = untried_move
+        random_move_type = untried_move_type
         for move in random_move:
-          self.my_card.remove(move)
+          print("move:", move.name)
+        for card in self.my_card:
+          print("card:",card.name)
+        #print("type",random_move_type)
+        if random_move_type not in ["yaobuqi","buyao"]:
+          for move in random_move:
+            self.my_card.remove(move)
         next_id = (self.my_id + 1) % 2
-        enemy_cards = self.enemy_cards
-        my_card =self.my_card
+        enemy_cards = self.my_card
+        my_card =self.enemy_cards
         #  判断出完牌游戏是否结束
         winner = self.my_id
         if len(self.my_card) != 0:
@@ -64,12 +65,59 @@ class State(object):
         #  如果选择不出， 下家的last_move等于自家的last_move
         if random_move_type in ["yaobuqi","buyao"]:
             last_move_type = "start"
+            last_move = []
         else:
           last_move_type = random_move_type
-        
-        next_state = State(next_id, my_card, enemy_cards, winner, random_move, random_move_type,move_nums,last_move_type,next_moves,next_move_types)
+          last_move = random_move
+        total_moves = myclass.Moves()
+        total_moves.get_moves(my_card)
+        next_move_types, next_moves =total_moves.get_next_moves(last_move_type,last_move)
+        move_nums =len(next_moves)
+
+
+        next_state = State(next_id, my_card, enemy_cards, winner, None, None,move_nums,last_move_type,next_moves,next_move_types)
         return next_state
 
+    def get_next_state_with_random_choice_in_simulation(self):
+      if len(self.next_moves) == 0:
+        random_move = []
+        random_move_type = "yaobuqi"
+      else:
+        if self.last_move_type == "start":
+          r_max = len(self.next_moves)
+        else:
+          r_max = len(self.next_moves) + 1
+        r = np.random.randint(0, r_max)
+        if r == len(self.next_moves):
+          random_move = []
+          random_move_type = "buyao"
+        else:
+          random_move = self.next_moves[r]
+          random_move_type = self.next_move_types[r]
+          
+      if random_move_type not in ["yaobuqi","buyao"]:
+        for move in random_move:
+          self.my_card.remove(move)
+      next_id = (self.my_id + 1) % 2
+      enemy_cards = self.my_card
+      my_card =self.enemy_cards
+      #  判断出完牌游戏是否结束
+      winner = self.my_id
+      if len(self.my_card) != 0:
+        winner = -1 
+      #  如果选择不出， 下家的last_move等于自家的last_move
+      if random_move_type in ["yaobuqi","buyao"]:
+          last_move_type = "start"
+          last_move = []
+      else:
+        last_move_type = random_move_type
+        last_move = random_move
+      total_moves = myclass.Moves()
+      total_moves.get_moves(my_card)
+      next_move_types, next_moves =total_moves.get_next_moves(last_move_type,last_move)
+      move_nums =len(next_moves)
+      next_state = State(next_id, my_card, enemy_cards, winner, None, None,move_nums,last_move_type,next_moves,next_move_types)
+      return next_state
     
 
 
@@ -83,8 +131,8 @@ class Node(object):
     self.state = state
     self.children = []
 
-    self.visit_times = 0
-    self.quality_value = 0.0
+    self.reward = 0
+    self.visit = 0
 
     
 
@@ -97,24 +145,6 @@ class Node(object):
   def get_children(self):
     return self.children
 
-  def get_visit_times(self):
-    return self.visit_times
-
-  def set_visit_times(self, times):
-    self.visit_times = times
-
-  def visit_times_add_one(self):
-    self.visit_times += 1
-
-  def get_quality_value(self):
-    return self.quality_value
-
-  def set_quality_value(self, value):
-    self.quality_value = value
-
-  def quality_value_add_n(self, n):
-    self.quality_value += n
-
   def is_all_expand(self):
         if len(self.children) < self.state.move_nums:
             return False
@@ -126,12 +156,8 @@ class Node(object):
   def set_state(self, state):
     self.state = state
     
-  def __repr__(self):
-    return "Node: {}, Q/N: {}/{}, state: {}".format(
-        hash(self), self.quality_value, self.visit_times, self.state)
   
   def expand(self, next_moves, next_move_types):
-    
     if len(next_moves) != 0:
       valid_moves = next_moves
       for i in range(len(valid_moves)):
@@ -140,8 +166,10 @@ class Node(object):
       move_nums = len(self.state.untried_actions)
       i = np.random.choice(move_nums)
       untried_move = self.state.untried_actions[i]
-      untried_move_type = next_move_types[i]
-      new_state = self.get_state().get_next_state_with_random_choice(untried_move,untried_move_type,next_moves,next_move_types,move_nums)
+      untried_move_type = self.state.untried_action_types[i]
+      self.state.action = untried_move
+      self.state.cards_type =untried_move_type
+      new_state = self.state.get_next_state_with_random_choice(untried_move,untried_move_type)
       del self.state.untried_actions[i]
       del self.state.untried_action_types[i]
       #print("nextmoves:",next_moves)
@@ -174,7 +202,8 @@ def default_policy(node,my_id):
   current_state = node.get_state()
   #  随机出牌直到游戏结束
   while current_state.winner == -1:
-      current_state = current_state.get_next_state_with_random_choice(node.state.untried_actions,node.state.untried_action_types,node.state.next_move_types,node.state.next_move_types,node.state.move_nums)
+      #print(current_state.winner)
+      current_state = current_state.get_next_state_with_random_choice_in_simulation()
   final_state_reward = current_state.compute_reward(my_id)
   return final_state_reward
 
@@ -203,16 +232,10 @@ def backup(node, reward):
   蒙特卡洛树搜索的Backpropagation阶段，输入前面获取需要expend的节点和新执行Action的reward，反馈给expend节点和上游所有节点并更新对应数据。
   """
 
-  # Update util the root node
-  while node != None:
-    # Update the visit times
-    node.visit_times_add_one()
-
-    # Update the quality value
-    node.quality_value_add_n(reward)
-
-    # Change the node to the parent node
-    node = node.parent
+  while node is not None:
+        node.visit += 1
+        node.reward += reward
+        node = node.parent
 
 
 
@@ -235,23 +258,26 @@ class MCTSModel(myclass.Cards,myclass.Player,game.Game,myclass.PlayRecords):
       enemy_cards = enemy_cards
       my_card = my_cards
       my_id = player_id
-      print("id",my_id)
-      state_ = State(my_id, my_card, enemy_cards,  -1, None, next_move_types, len(next_moves),last_move_type,next_moves,next_move_types)
-      print("len:",len(next_moves))
+      #print("id",my_id)
+      state_ = State(my_id, my_card, enemy_cards,  -1, None, None, len(next_moves),last_move_type,next_moves,next_move_types)
+      #print("len:",len(next_moves))
       self.current_node.set_state(state_)
 
-      computation_budget = 2000
-      for _ in range(computation_budget):
+      computation_budget = 10
+      for i in range(computation_budget):
+          #print("i:",i)
+          self.current_node = root
           expand_node = tree_policy(self.current_node, my_id)
-          print("expand:",expand_node.state.untried_action_types)
+          #print("expand:",expand_node.state.untried_action_types)
           reward = default_policy(expand_node,my_id)
           backup(expand_node, reward)
+          print("done")
 
       best_next_node = get_bestchild_(self.current_node)
       new_move = best_next_node.get_state().action
       self.current_node = best_next_node
       new_move_type = best_next_node.get_state().cards_type
-      
+      #print("move:",new_move)
       return new_move_type,new_move 
       
 

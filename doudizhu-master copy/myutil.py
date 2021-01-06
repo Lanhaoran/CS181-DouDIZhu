@@ -86,9 +86,9 @@ def game_init(players, playrecords, cards):
     left = cards.cards[43:]
     players[0].cards_left = playrecords.cards_left1 = p1_cards
     players[1].cards_left = playrecords.cards_left2 = p2_cards
-    card_show(p1_cards, "1", 1)
-    card_show(p2_cards, "2", 1)
-    card_show(left, "left", 1)
+    #card_show(p1_cards, "1", 1)
+    #card_show(p2_cards, "2", 1)
+    #card_show(left, "left", 1)
     
 
 class SortCards(object):

@@ -12,11 +12,11 @@ if __name__=="__main__":
     for j in range(1):
         #game_ddz = copy.deepcopy(game_ddz)
         i = 0
-        print("here")
+        #print("here")
         while (game_ddz.playrecords.winner == 0):
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            game_ddz.playrecords.show(str(i))
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            #game_ddz.playrecords.show(str(i))
+            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             game_ddz.next_move()
             i = i + 1
         print(game_ddz.playrecords.winner)
