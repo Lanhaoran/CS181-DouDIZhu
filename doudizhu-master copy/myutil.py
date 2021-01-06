@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+import DQN
+import random
+
 #展示扑克函数
 def card_show(cards, info, n):
     
@@ -72,6 +75,38 @@ def choose_with_little_smart(next_move_types, next_moves, last_move_type):
         return "yaobuqi", []
     else:
         return sort_all_rank(next_moves,next_move_types,last_move_type)
+
+#DQN
+def choose_DQN(next_move_types, next_moves, last_move_type, cards, net):
+    #要不起
+    if len(next_moves) == 0:
+        return "yaobuqi", [] 
+    else:
+        # 有一定的概率随机出牌，方便在训练中遍历更多情况(10%)
+        prop = random.randint(1,100)
+        if prop > 89:
+            choose_random(next_move_types, next_moves, last_move_type)
+
+        # 根据ＤＱＮ出牌
+        best_action = ""
+        best_action_type = ""
+        max_value = -999999999
+        cards_table = DQN.get_table_of_cards(cards)
+        if last_move_type != "start":
+            next_move_types.append("buyao")
+            next_moves.append([])
+        for i in range(len(next_moves)):
+            move_table = DQN.get_table_of_cards(next_moves[i])
+            input = cards_table.copy()
+            input.extend(move_table)
+            value = net.get_value_only(input)
+            if value > max_value:
+                max_value = value
+                best_action = next_moves[i]
+                best_action_type = next_move_types[i]
+        return best_action_type, best_action
+
+
 #发牌
 def game_init(players, playrecords, cards):
     

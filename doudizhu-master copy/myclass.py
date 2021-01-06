@@ -307,9 +307,12 @@ class Player(object):
     """
     player类
     """
-    def __init__(self, player_id):
+    def __init__(self, player_id, model, net = None):
+        # 基本信息
         self.player_id = player_id
         self.cards_left = []
+        self.model = model
+        self.net = net
 
     #展示
     def show(self, info):
@@ -322,12 +325,13 @@ class Player(object):
         #playrecords中records记录[id,next_move]
         if self.next_move_type in ["yaobuqi", "buyao"]:
             self.next_move = self.next_move_type
-            playrecords.records.append([self.player_id, self.next_move_type])
+            playrecords.records.append([self.player_id, self.next_move_type, self.cards_left])
         else:
-            playrecords.records.append([self.player_id, self.next_move])
+            #playrecords.records.append([self.player_id, self.next_move])
             for i in self.next_move:
                self.cards_left.remove(i)
                #self.cards_out.append((self.player_id,i))
+            playrecords.records.append([self.player_id, self.next_move, self.cards_left])
         #同步playrecords
         if self.player_id == 1:
             playrecords.cards_left1 = self.cards_left
@@ -356,7 +360,7 @@ class Player(object):
         #在next_moves中选择出牌方法
         #print("i:", i)
         #print("len:",len(model))
-        self.next_move_type, self.next_move = chooseModel.choose(self.next_move_types, self.next_moves, last_move_type, model[i%2],playrecords.cards_left1,playrecords.cards_left2,i)
+        self.next_move_type, self.next_move = chooseModel.choose(self.next_move_types, self.next_moves, last_move_type, self.model,playrecords.cards_left1,playrecords.cards_left2,i,self.net)
         #记录
         end = self.record_move(playrecords)
         #展示

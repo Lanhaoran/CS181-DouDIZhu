@@ -1,7 +1,14 @@
 import myclass
 import myutil
 import time
-import copy                   
+import copy    
+import DQN
+
+def Load_Net():
+    net = DQN.Net()
+    return net
+
+
 class Game(object):
     
     def __init__(self, model):
@@ -15,18 +22,25 @@ class Game(object):
         self.i = 0
         self.yaobuqis = []
         self.cards_out = []
+
         #choose模型
         self.model = []
         for mod in model:
             self.model.append(mod)
         #print("length:",self.model)
-    #发牌
-    def game_start(self):
-        
+
         #初始化players
         self.players = []
-        for i in range(1,4):
-            self.players.append(myclass.Player(i))
+        for i in range(1,3):
+            if self.model[i-1] == 'DQN':
+                self.players.append(myclass.Player(i,self.model[i-1],Load_Net()))
+            else: 
+                self.players.append(myclass.Player(i,self.model[i-1]))
+
+
+
+    #发牌
+    def game_start(self):
         
         #初始化扑克牌记录类
         self.playrecords = myclass.PlayRecords()    

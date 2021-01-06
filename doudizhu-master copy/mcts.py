@@ -307,7 +307,7 @@ class MCTSModel(myclass.Cards,myclass.Player,game.Game,myclass.PlayRecords):
           #print("done")
           #count+=1
       #print("here!!!!!!!!!!!!!!")
-      print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+      #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
       best_next_node = get_bestchild_(self.current_node)
       new_move = best_next_node.get_state().action
       self.current_node = best_next_node
