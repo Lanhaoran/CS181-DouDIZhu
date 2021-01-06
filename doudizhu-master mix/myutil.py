@@ -68,6 +68,7 @@ def choose_random(next_move_types, next_moves, last_move_type):
     #sort_all_rank(next_moves)
     return next_move_types[r], next_moves[r]
     
+# little_smart
 def choose_with_little_smart(next_move_types, next_moves, last_move_type):
     
         
@@ -106,6 +107,41 @@ def choose_DQN(next_move_types, next_moves, last_move_type, cards, net):
                 best_action_type = next_move_types[i]
         return best_action_type, best_action
 
+
+#manual
+def choose_manual(next_move_types, next_moves, last_move_type, cards):
+    #要不起
+    if len(next_moves) == 0:
+        return "yaobuqi", [] 
+    else:
+        # 展示手牌
+        card_show(cards,"Your card: ", 1)
+        card_show(next_moves,"Moves: ", 2)
+        '''move_index_list = []
+        for move in next_moves:
+            move_index_list.append([cards.index(card) for card in move])
+        print("Move index combination: ", move_index_list)
+        '''
+        # 要求输入
+        print("Print the index of cards in the deck shown above, split with comma")
+        input_list = input('>>>')
+        #　最开始不能出不要
+        while last_move_type == 'start' and input_list == 'buyao':
+            print("Illegal combinations, try again!")
+            input_list = input('>>>')
+        if last_move_type != 'start' and input_list == 'buyao':
+            return 'buyao', []
+        # 处理输入
+        move_ind_list = [int(ind) for ind in input_list.split(',')]
+        move = [cards[i] for i in move_ind_list]
+        while move not in next_moves:
+            print("Illegal combinations, try again!")
+            input_list = input('>>>')
+            move_ind_list = [int(ind) for ind in input_list.split(',')]
+            move = [cards[i] for i in move_ind_list]
+        # 返回出牌类型和牌组
+        index = next_moves.index(move)
+        return next_move_types[index], next_moves[index]
 
 #发牌
 def game_init(players, playrecords, cards):

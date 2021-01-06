@@ -9,14 +9,14 @@ if __name__=="__main__":
     
     begin = time.time()
     winner_conut = 0
-    game_ddz = game.Game(["mcts", "DQN"])
+    game_ddz = game.Game(["mcts", "manual"])
     #print("here")
     if 'DQN' in game_ddz.model:
         index_list = []
         for i in range(len(game_ddz.model)):           
             if game_ddz.model[i] == 'DQN':
                 index_list.append(i)
-    game_round = 30
+    game_round = 1
     for j in range(game_round):
         #game_ddz = copy.deepcopy(game_ddz)
         game_ddz.game_start()
