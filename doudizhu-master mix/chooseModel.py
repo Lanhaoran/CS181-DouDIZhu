@@ -2,8 +2,15 @@ import myutil
 import random
 
 
-def choose(next_move_types, next_moves, last_move_type, model,my_cards,enemy_cards,player_id,net):
+def choose(next_move_types, next_moves, last_move_type, model,cards_left1,cards_left2,player_id,net):
     from mcts import MCTSModel
+    if player_id == 0:
+        my_cards = cards_left1
+        enemy_cards = cards_left2
+    else:
+        my_cards = cards_left2
+        enemy_cards = cards_left1
+
     if model == "random":
         #print("?????????????????????")
         return myutil.choose_random(next_move_types, next_moves, last_move_type)
@@ -19,6 +26,6 @@ def choose(next_move_types, next_moves, last_move_type, model,my_cards,enemy_car
         mc = MCTSModel()
         return mc.choose_with_mcts(next_moves, next_move_types, last_move_type,my_cards,enemy_cards,player_id)
     if model == "DQN":
-        return myutil.choose_DQN(next_move_types, next_moves, last_move_type, enemy_cards, net)
+        return myutil.choose_DQN(next_move_types, next_moves, last_move_type, my_cards, net)
     if model == "manual":
-        return myutil.choose_manual(next_move_types, next_moves, last_move_type, enemy_cards)
+        return myutil.choose_manual(next_move_types, next_moves, last_move_type, my_cards)

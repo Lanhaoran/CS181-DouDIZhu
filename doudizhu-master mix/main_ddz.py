@@ -9,14 +9,15 @@ if __name__=="__main__":
     
     begin = time.time()
     winner_conut = 0
-    game_ddz = game.Game(["mcts", "manual"])
+    #mcts 只能为第一个ｐｌａｙｅｒ
+    game_ddz = game.Game(["DQN", "little_smart"])
     #print("here")
     if 'DQN' in game_ddz.model:
         index_list = []
         for i in range(len(game_ddz.model)):           
             if game_ddz.model[i] == 'DQN':
                 index_list.append(i)
-    game_round = 1
+    game_round = 100
     for j in range(game_round):
         #game_ddz = copy.deepcopy(game_ddz)
         game_ddz.game_start()
@@ -67,8 +68,8 @@ if __name__=="__main__":
                     input.extend(move_table)
                     DQN_player.net.train(input,reward)
                     reward *= 0.9
-            if (j+1) % 20 == 0:
-                print('DQN Win time: ' + str(winner_conut) + '/20')
+            if (j+1) % 50 == 0:
+                print('DQN Win time: ' + str(winner_conut) + '/50')
                 winner_conut = 0
             if j == game_round - 1:
                 DQN_player.net.save_model()

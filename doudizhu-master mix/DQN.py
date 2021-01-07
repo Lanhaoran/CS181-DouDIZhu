@@ -43,7 +43,7 @@ class Net():
     def __init__(self):
         # 搭建网络
         try:
-            self.load_model("stupid_model.pkl")
+            self.load_model("stupid_model_3500.pkl")
             print("Load net")
         except (FileNotFoundError):            
             print("Build net")          
@@ -85,7 +85,7 @@ class Net():
         return out
     
     def save_model(self):
-        torch.save(self.net, "stupid_model.pkl")
+        torch.save(self.net, "stupid_model_3500.pkl")
         print("model saved")
     
     def load_model(self,path):

@@ -117,11 +117,12 @@ def choose_manual(next_move_types, next_moves, last_move_type, cards):
         # 展示手牌
         card_show(cards,"Your card: ", 1)
         card_show(next_moves,"Moves: ", 2)
-        '''move_index_list = []
+        #print(cards)
+        move_index_list = []
         for move in next_moves:
             move_index_list.append([cards.index(card) for card in move])
         print("Move index combination: ", move_index_list)
-        '''
+        
         # 要求输入
         print("Print the index of cards in the deck shown above, split with comma")
         input_list = input('>>>')
