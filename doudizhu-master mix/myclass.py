@@ -92,11 +92,15 @@ class PlayRecords(object):
     #展示
     def show(self, info):
         print(info)
-        myutil.card_show(self.cards_left1, "player 1", 1)
+        #myutil.card_show(self.cards_left1, "player 1", 1)
         print('player 1 number:', len(self.cards_left1))
-        myutil.card_show(self.cards_left2, "player 2", 1)
+        #myutil.card_show(self.cards_left2, "player 2", 1)
         print('player 2 number:', len(self.cards_left2))
         myutil.card_show(self.records, "record", 3)
+    
+    # 返回手牌
+    def get_cards_left(self):
+        return self.cards_left1.copy(), self.cards_left2.copy()
 
 
 ############################################
@@ -362,7 +366,7 @@ class Player(object):
         #在next_moves中选择出牌方法
         #print("i:", i)
         #print("len:",len(model))
-        self.next_move_type, self.next_move = chooseModel.choose(self.next_move_types, self.next_moves, last_move_type, self.model,playrecords.cards_left1,playrecords.cards_left2,i,self.net)
+        self.next_move_type, self.next_move = chooseModel.choose(self.next_move_types, self.next_moves, last_move_type, self.model,playrecords.cards_left1,playrecords.cards_left2,i,self.net,playrecords)
         #记录
         end = self.record_move(playrecords)
         #展示

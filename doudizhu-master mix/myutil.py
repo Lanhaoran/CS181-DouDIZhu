@@ -78,32 +78,60 @@ def choose_with_little_smart(next_move_types, next_moves, last_move_type):
         return sort_all_rank(next_moves,next_move_types,last_move_type)
 
 #DQN
-def choose_DQN(next_move_types, next_moves, last_move_type, cards, net):
+def choose_DQN(next_move_types, next_moves, last_move_type, cards, net, record, length_of_enemy):
     #要不起
     if len(next_moves) == 0:
         return "yaobuqi", [] 
     else:
         # 有一定的概率随机出牌，方便在训练中遍历更多情况(10%)
+        '''
         prop = random.randint(1,100)
         if prop > 89:
             choose_random(next_move_types, next_moves, last_move_type)
+        '''
 
         # 根据ＤＱＮ出牌
-        best_action = ""
-        best_action_type = ""
+        # 初始化
+        best_action = next_moves[0] 
+        best_action_type = next_move_types[0]
         max_value = -999999999
         # 构建我自己手牌的table
         cards_table = DQN.get_table_of_cards(cards)
 
-        
+        #print([card.name+card.color for card in cards])
+        #print(cards_table)
+
+
+        #　构建已经出牌的table
+        #print(record.records)
+        record_list = []
+        for rec in record.records:
+            if rec[1] != 'yaobuqi' and rec[1] != 'buyao':
+                record_list.extend(rec[1])
+        record_table = DQN.get_table_of_cards(record_list)
+        #print([card.name + card.color for card in record_list])
+        #print(record_table)
+
+        # 添加对手牌组长度
+        enemy_length = [int(length_of_enemy)]
+        #print(enemy_length)
+
         if last_move_type != "start":
             next_move_types.append("buyao")
             next_moves.append([])
+    
+        #print([[card.name + card.color for card in move] for move in next_moves])
         for i in range(len(next_moves)):
+            # 构建action的table
             move_table = DQN.get_table_of_cards(next_moves[i])
+            # 构建同一长度的input(54+54+54+1=163)
             input = cards_table.copy()
             input.extend(move_table)
+            input.extend(record_table)
+            input.extend(enemy_length)
+            #print(input)
             value = net.get_value_only(input)
+            #print([card.name + card.color for card in next_moves[i]],value)
             if value > max_value:
                 max_value = value
                 best_action = next_moves[i]
@@ -153,11 +181,11 @@ def game_init(players, playrecords, cards):
     #洗牌
     np.random.shuffle(cards.cards)
     #排序
-    p1_cards = cards.cards[:20]
+    p1_cards = cards.cards[:23]  # 地主
     p1_cards.sort(key=lambda x: x.rank)
-    p2_cards = cards.cards[20:40]
+    p2_cards = cards.cards[23:43]
     p2_cards.sort(key=lambda x: x.rank)
-    Dizhupai = cards.cards[40:43]
+    #Dizhupai = cards.cards[40:43]
     left = cards.cards[43:]
     players[0].cards_left = playrecords.cards_left1 = p1_cards
     players[1].cards_left = playrecords.cards_left2 = p2_cards

@@ -27,12 +27,10 @@ TOTAL_Cards_types = ['1-a-12', '1-b-12','1-c-12','1-d-12',
 
 
 def get_table_of_cards(cards):
-    cardtable = [0]*len(TOTAL_Cards_types)
+    cardtable = [0]*15
     for card in cards:
-        #full_card = str(card.name) + '-' + str(card.color) + '-' + str(card.rank)
-        full_card = card.card_type
-        #print(full_card)
-        cardtable[TOTAL_Cards_types.index(full_card)] = 1
+        card_name = int(card.name)-1
+        cardtable[card_name] += 1
     return cardtable
 
 import torch
@@ -43,30 +41,32 @@ class Net():
     def __init__(self):
         # 搭建网络
         try:
-            self.load_model("stupid_model_3500.pkl")
+            self.load_model("stupid_model_plus_4.pkl")
             print("Load net")
         except (FileNotFoundError):            
             print("Build net")          
             self.net = torch.nn.Sequential(
-                torch.nn.Linear(108, 250),
+                torch.nn.Linear(46, 250),
                 torch.nn.ReLU(),
-                torch.nn.Linear(250, 100),
+                torch.nn.Linear(250, 50),
                 torch.nn.ReLU(),
-                torch.nn.Linear(100, 1)
+                torch.nn.Linear(50, 1)
             )
 
     def train(self,input,output):
+        # 训练网络
         #print('train start')
         x = Variable(torch.tensor(input)).float()
         y = Variable(torch.tensor(output)).float()
+        y = y.view(-1,1)
         #print(x)
         #print(y)
         # 设置优化器
-        optimizer = torch.optim.SGD(self.net.parameters(), lr=0.01)
+        optimizer = torch.optim.SGD(self.net.parameters(), lr=0.001)
         loss_func = torch.nn.MSELoss()
 
         # 训练
-        for i in range(500):
+        for i in range(100):
             out = self.net(x)
             loss = loss_func(out, y)
             optimizer.zero_grad()
@@ -85,11 +85,14 @@ class Net():
         return out
     
     def save_model(self):
-        torch.save(self.net, "stupid_model_3500.pkl")
+        torch.save(self.net, "stupid_model_plus_4.pkl")
         print("model saved")
     
     def load_model(self,path):
         self.net = torch.load(path)
+
+
+#print(get_table_of_cards(TOTAL_Cards_types))
 
 
 

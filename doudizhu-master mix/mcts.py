@@ -9,8 +9,6 @@ import game
 import myclass
 import copy
 from get_bestchild import get_bestchild_,get_bestchild
-
-
 class State(object):
     def __init__(self, my_id, my_card, next_card, winner, action, cards_type, move_nums, last_move_type,next_moves,next_move_types):
         self.my_id = my_id  #当前state序号
@@ -70,7 +68,7 @@ class State(object):
         next_id = (self.my_id + 1) % 2
         #  判断出完牌游戏是否结束
         winner = self.my_id
-        if len(self.my_card) != 0:
+        if len(enemy_cards) != 0:
           winner = -1 
         #  如果选择不出， 下家的last_move等于自家的last_move
         if random_move_type in ["yaobuqi","buyao"]:
@@ -82,9 +80,14 @@ class State(object):
         total_moves = myclass.Moves()
         total_moves.get_moves(my_card)
         next_move_types, next_moves =total_moves.get_next_moves(last_move_type,last_move)
-        move_nums =len(next_moves)
-
-
+        move_nums = len(next_moves)
+        if move_nums == 0:
+          move_nums = 1
+          next_move_types = "start"
+          next_moves = []
+          #print("???????????")
+        #print("move_type:",next_move_types)
+        #print("movenumsss:",move_nums)
         next_state = State(next_id, my_card, enemy_cards, winner, last_move,last_move_type ,move_nums,last_move_type,next_moves,next_move_types)
         return next_state
 
@@ -125,7 +128,7 @@ class State(object):
       total_moves = myclass.Moves()
       total_moves.get_moves(my_card)
       next_move_types, next_moves =total_moves.get_next_moves(last_move_type,last_move)
-      move_nums =len(next_moves)
+      move_nums =len(next_move_types)
       next_state = State(next_id, my_card, enemy_cards, winner, None, None,move_nums,last_move_type,next_moves,next_move_types)
       return next_state
     
@@ -175,28 +178,47 @@ class Node(object):
       i = np.random.choice(move_nums)
       untried_move = next_moves[i]
       untried_move_type = next_move_types[i]
-      self.state.action = untried_move
-      self.state.cards_type = untried_move_type
       #print("cardofmyself:",len(self.state.my_card))
       new_state = self.state.get_next_state_with_random_choice(untried_move, untried_move_type)
       #print("nextmoves:",next_moves)
       sub_node = Node(self, new_state)
       self.add_child(sub_node)
+      """for move in sub_node.state.action:
+          print("randommove:", move.name)
+      print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+      for cards in sub_node.state.next_moves:
+          for card in cards:
+            print("allmoves:", card.name)
+      print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")"""
       return sub_node
     else: 
       total_moves = myclass.Moves()
       total_moves.get_moves(self.state.enemy_cards)
-      next_move_types, next_moves =total_moves.get_next_moves("start",[])
-      new_state = State((self.state.my_id + 1) % 2, self.state.enemy_cards, self.state.my_card, -1, None, None,0,"start",next_moves,next_move_types)
+      next_move_types, next_moves = total_moves.get_next_moves("start", [])
+      move_nums = len(next_move_types)
+      #print("movenum222222222:",move_nums)
+      new_state = State((self.state.my_id + 1) % 2, self.state.enemy_cards, self.state.my_card, -1, [], "buyao",move_nums,"buyao",next_moves,next_move_types)
       sub_node = Node(self, new_state)
       self.add_child(sub_node)
       return sub_node
 
-
 def tree_policy(node, my_id):
+    #count = 0
+    while node.state.winner == -1:
+        if node.is_all_expand():
+            #print("node info:",node.state.move_nums)
+            
+            node = get_bestchild(node, my_id)
+            
+        else:
+            sub_node = node.expand(node.state.next_moves,node.state.next_move_types)
+            return sub_node
+    return node
+def tree_policy2(node, my_id):
     #count = 0
     if node.state.winner == -1:
         if node.is_all_expand():
+            #print("node info:",node.state.move_nums)
             
             node = get_bestchild(node, my_id)
             
@@ -228,25 +250,6 @@ def default_policy(node,my_id):
   return final_state_reward
 
 
-
-
-
-def best_child(node):
-  """
-  使用UCB算法，权衡exploration和exploitation后选择得分最高的子节点，注意如果是预测阶段直接选择当前Q值得分最高的。
-  """
-
-  visit = np.array([n.visit for n in node.children])
-  reward = np.array([n.reward for n in node.children])
-  values = reward / visit
-  index = np.where(values == np.max(values))
-  nodes = np.array(node.children)[index]
-  if len(nodes) == 1:
-      return nodes[0]
-  else:
-      return np.random.choice(nodes)
-
-
 def backup(node, reward):
   """
   蒙特卡洛树搜索的Backpropagation阶段，输入前面获取需要expend的节点和新执行Action的reward，反馈给expend节点和上游所有节点并更新对应数据。
@@ -257,10 +260,6 @@ def backup(node, reward):
         node.reward += reward
         node = node.parent
 
-
-
-
-
 class MCTSModel(myclass.Cards,myclass.Player,game.Game,myclass.PlayRecords):
   def __init__(self):
     super(MCTSModel, self).__init__()
@@ -268,56 +267,112 @@ class MCTSModel(myclass.Cards,myclass.Player,game.Game,myclass.PlayRecords):
     self.current_node = root
   
   def choose_with_mcts(self, next_moves, next_move_types,last_move_type,my_cards,enemy_cards,player_id):
-    
-      root = Node(None, None)
-      self.current_node = root
-    
-      """for child in self.current_node.get_children():
-        if self.compare(child.state.action,last_move):
-          self.current_node = child"""
-      enemy_cards = enemy_cards
-      my_card = my_cards
-      my_id = player_id
-      #print("id",my_id)
-      state_ = State(my_id, my_card, enemy_cards,  -1, None, None, len(next_moves),last_move_type,next_moves,next_move_types)
-      #print("len:",len(next_moves))
-      self.current_node.set_state(state_)
-      #count = 0
-      computation_budget = 200
-      for i in range(computation_budget):
-          #print("count:",count)
-          """for card in self.current_node.state.my_card:
-            print("my_card_:", card.name)
-          for card in self.current_node.state.enemy_cards:
-            print("enemy_card_:", card.name)"""
-          #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-          expand_node = tree_policy(self.current_node, my_id)
-          """for card in self.current_node.state.my_card:
-            print("my_card_:", card.name)
-          for card in self.current_node.state.enemy_cards:
-            print("enemy_card_:", card.name)"""
-          reward = default_policy(expand_node, my_id)
-          """print("reward:",reward)
-          print("my_card_count:", root.state.my_card)
-          print("enemy_card:", root.state.enemy_cards)
-          print("my_card_count:", self.current_node.children[0].state.my_card)
-          print("enemy_card:",self.current_node.children[0].state.enemy_cards)"""
-          backup(expand_node, reward)
-         
-          #print("done")
-          #count+=1
-      #print("here!!!!!!!!!!!!!!")
-      #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-      best_next_node = get_bestchild_(self.current_node)
-      new_move = best_next_node.get_state().action
-      self.current_node = best_next_node
-      new_move_type = best_next_node.get_state().cards_type
-      """for move in new_move:
-        print("move:",move.name)"""
-      return new_move_type,new_move 
-      
+      if len(next_moves) == 1:
+        return next_move_types[0], next_moves[0]
+      else:
+        root = Node(None, None)
+        self.current_node = root
+        #print("last_type:",last_move_type)
+        """for child in self.current_node.get_children():
+          if self.compare(child.state.action,last_move):
+            self.current_node = child"""
+        my_id = player_id
+        #print("id",my_id)
+        state_ = State(my_id, my_cards, enemy_cards,  -1, None, None, len(next_moves),last_move_type,next_moves,next_move_types)
+        #print("len:",len(next_moves))
+        self.current_node.set_state(state_)
+        #count = 0
+        computation_budget = 500
+        for _ in range(computation_budget):
+            #print("count:",count)
+            """for card in self.current_node.state.my_card:
+              print("my_card_:", card.name)
+            for card in self.current_node.state.enemy_cards:
+              print("enemy_card_:", card.name)"""
+            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            # if the children of current node are not all_expanded,
+            # then expand a new node
+            # otherwise select its best child to be new checked node
+            expand_node = tree_policy(self.current_node, my_id)
+            # simulate the game til the end 
+            # and return the reward based on the game result
+            reward = default_policy(expand_node, my_id)
+            # backup the reward till the root
+            backup(expand_node, reward)
+          
+            #print("done")
+            #count+=1
+        #print("here!!!!!!!!!!!!!!")
+        #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        #print("parent:",self.current_node.parent)
+        self.current_node = root
+        
+        best_next_node = get_bestchild_(self.current_node)
+        #print("parent:",best_next_node.parent)
+        new_move = best_next_node.get_state().action
+        new_move_type = best_next_node.get_state().cards_type
+        #print("parent:",best_next_node.parent)
+        """print("children:",best_next_node.children)
+        for moves in best_next_node.state.next_moves:
+          for card in moves:
+            print("all_moves:",card.name)
+        for move in new_move:
+          print("move!!!!!!!!!!!!!!!!!!!!!!!:",move.name,move.color)"""
+        return new_move_type,new_move 
 
-    
+  def choose_with_mcts_old(self,next_moves, next_move_types, last_move_type, my_cards, enemy_cards, player_id):
+      if len(next_moves) == 1:
+        return next_move_types[0], next_moves[0]
+      else:
+        root = Node(None, None)
+        self.current_node = root
+        #print("last_type:",last_move_type)
+        """for child in self.current_node.get_children():
+          if self.compare(child.state.action,last_move):
+            self.current_node = child"""
+        my_id = player_id
+        #print("id",my_id)
+        state_ = State(my_id, my_cards, enemy_cards,  -1, None, None, len(next_moves),last_move_type,next_moves,next_move_types)
+        #print("len:",len(next_moves))
+        self.current_node.set_state(state_)
+        #count = 0
+        computation_budget = 500
+        for _ in range(computation_budget):
+            #print("count:",count)
+            """for card in self.current_node.state.my_card:
+              print("my_card_:", card.name)
+            for card in self.current_node.state.enemy_cards:
+              print("enemy_card_:", card.name)"""
+            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            # if the children of current node are not all_expanded,
+            # then expand a new node
+            # otherwise select its best child to be new checked node
+            expand_node = tree_policy2(self.current_node, my_id)
+            # simulate the game til the end 
+            # and return the reward based on the game result
+            reward = default_policy(expand_node, my_id)
+            # backup the reward till the root
+            backup(expand_node, reward)
+          
+            #print("done")
+            #count+=1
+        #print("here!!!!!!!!!!!!!!")
+        #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        #print("parent:",self.current_node.parent)
+        self.current_node = root
+        
+        best_next_node = get_bestchild_(self.current_node)
+        #print("parent:",best_next_node.parent)
+        new_move = best_next_node.get_state().action
+        new_move_type = best_next_node.get_state().cards_type
+        #print("parent:",best_next_node.parent)
+        """print("children:",best_next_node.children)
+        for moves in best_next_node.state.next_moves:
+          for card in moves:
+            print("all_moves:",card.name)
+        for move in new_move:
+          print("move!!!!!!!!!!!!!!!!!!!!!!!:",move.name,move.color)"""
+        return new_move_type,new_move 
 
 
 
