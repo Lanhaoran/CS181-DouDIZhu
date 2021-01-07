@@ -93,7 +93,9 @@ class PlayRecords(object):
     def show(self, info):
         print(info)
         myutil.card_show(self.cards_left1, "player 1", 1)
+        print('player 1 number:', len(self.cards_left1))
         myutil.card_show(self.cards_left2, "player 2", 1)
+        print('player 2 number:', len(self.cards_left2))
         myutil.card_show(self.records, "record", 3)
 
 

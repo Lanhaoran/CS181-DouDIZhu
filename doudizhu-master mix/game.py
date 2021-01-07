@@ -37,8 +37,6 @@ class Game(object):
             else: 
                 self.players.append(myclass.Player(i,self.model[i-1]))
 
-
-
     #发牌
     def game_start(self):
         

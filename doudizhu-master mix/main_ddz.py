@@ -17,7 +17,7 @@ if __name__=="__main__":
         for i in range(len(game_ddz.model)):           
             if game_ddz.model[i] == 'DQN':
                 index_list.append(i)
-    game_round = 100
+    game_round = 1
     for j in range(game_round):
         #game_ddz = copy.deepcopy(game_ddz)
         game_ddz.game_start()

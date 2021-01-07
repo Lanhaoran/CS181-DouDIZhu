@@ -92,7 +92,10 @@ def choose_DQN(next_move_types, next_moves, last_move_type, cards, net):
         best_action = ""
         best_action_type = ""
         max_value = -999999999
+        # 构建我自己手牌的table
         cards_table = DQN.get_table_of_cards(cards)
+
+        
         if last_move_type != "start":
             next_move_types.append("buyao")
             next_moves.append([])
