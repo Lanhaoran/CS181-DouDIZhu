@@ -11,14 +11,15 @@ if __name__=="__main__":
     begin = time.time()
     winner_conut = 0
     #mcts 只能为第一个ｐｌａｙｅｒ
-    game_ddz = game.Game(["mcts","manual"])
+    game_ddz = game.Game(["mcts","little_smart"])
     #print("here")
+    result = 0
     if 'DQN' in game_ddz.model:
         DQN_index_list = []
         for i in range(len(game_ddz.model)):           
             if game_ddz.model[i] == 'DQN':
                 DQN_index_list.append(i)
-    game_round = 1
+    game_round = 100
 
     # 初始化存储list
     #input_list = []
@@ -55,7 +56,9 @@ if __name__=="__main__":
             i = i + 1
 
         print("round " , j+1)
-        print("winner:" , game_ddz1.playrecords.winner)
+        print("winner:", game_ddz1.playrecords.winner)
+        if game_ddz1.playrecords.winner == 1:
+            result+=1
         #print(new_cards_left_record)
         #print(len(new_cards_left_record))
 
@@ -153,7 +156,7 @@ if __name__=="__main__":
         np.save("input_data.npy",input_list)
         np.save("reward_data.npy", reward_list)
         print("data saved")
-                
+    print("win rate:",result/100)
 
         
 
